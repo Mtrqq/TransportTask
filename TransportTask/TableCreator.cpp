@@ -250,7 +250,7 @@ namespace TransportTask
     constexpr int last_enum_element = static_cast<int>(CreationMethod::LAST);
     for (int i = 0; i != last_enum_element; ++i)
     {
-      output << i + 1 << "." << GetMethodNameString(static_cast<CreationMethod>(i)) << '\n';
+      output << i + 1 << "." << GetMethodName(static_cast<CreationMethod>(i)) << '\n';
     }
     output << "Answer :";
     for (;;)
@@ -265,7 +265,7 @@ namespace TransportTask
     }
   }
 
-  std::string GetMethodNameString(CreationMethod i_method)
+  std::string GetMethodName(CreationMethod i_method)
   {
     switch (i_method)
     {
@@ -276,6 +276,7 @@ namespace TransportTask
     case TransportTask::CreationMethod::VogelApproximation:
       return "Vogel approximation";
     }
+    throw std::runtime_error{ "Undefined creation method" };
   }
 
   Matrix<double> FormatTask(const TransportInformation &i_data, CreationMethod i_method)

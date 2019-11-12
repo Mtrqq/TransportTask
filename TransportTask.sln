@@ -1,9 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29215.179
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.539
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TransportTask", "TransportTask\TransportTask.vcxproj", "{8C54E20C-15C5-4347-9008-5BD765072D5E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "InputFiles", "InputFiles", "{906145FC-2470-4D8D-8401-4739B3EF33F4}"
+	ProjectSection(SolutionItems) = preProject
+		TransportTask\InputFiles\input.txt = TransportTask\InputFiles\input.txt
+		TransportTask\InputFiles\practice.txt = TransportTask\InputFiles\practice.txt
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
