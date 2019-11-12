@@ -23,12 +23,12 @@ namespace TransportTask
 
   constexpr double empty_value = std::numeric_limits<double>::lowest();
 
-  class TaskData
+  class TransportInformation
   {
     enum class ResourcesState { Normal, Sufficient, Overflow };
   public:
 
-    TaskData(const Matrix<double>& i_cost, const Vector<double> i_resources, const Vector<double> i_requirements);
+    TransportInformation(const Matrix<double>& i_cost, const Vector<double> i_resources, const Vector<double> i_requirements);
 
     std::optional<std::string> GetMessageForState() const;
 
@@ -36,10 +36,10 @@ namespace TransportTask
     Vector<double> m_requirements;
     Vector<double> m_resources;
   private:
-    ResourcesState resources_overflow = ResourcesState::Normal;
+    ResourcesState m_state = ResourcesState::Normal;
   };
 
-  TaskData ReadTaskFromStream(std::istream& i_stream, std::ostream* o_logger = nullptr);
+  TransportInformation ReadTaskFromStream(std::istream& i_stream, std::ostream* o_logger = nullptr);
 }
 
 namespace TableProcessor

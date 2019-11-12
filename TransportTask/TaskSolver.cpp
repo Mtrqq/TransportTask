@@ -157,12 +157,13 @@ namespace
 
 namespace TransportTask
 {
-  double GetOptimalSolution(const TaskData& i_data, std::ostream *o_logger)
+  double GetOptimalSolution(const TransportInformation& i_data, CreationMethod i_method, std::ostream *o_logger)
   {
     OptionalOutputStream output_stream{ o_logger };
-    auto solution_matrix = FormatTask(i_data.m_resources, i_data.m_requirements);
+    auto solution_matrix = FormatTask(i_data, i_method);
     output_stream << "Initial matrix :\n\n" << solution_matrix;
     output_stream << "\n\nInitial price = " << CalculateTransportPrice(solution_matrix, i_data.m_costs_matrix);
+    SizeType iterations_count = 0;
     for(;;)
     {
       auto potentials = CalculatePotentials(i_data, solution_matrix);
@@ -170,6 +171,7 @@ namespace TransportTask
         throw std::runtime_error{ "Matrix degenerated !" };
       output_stream << potentials.value() << '\n';
       auto indexes = GetInvalidElementIndexes(i_data.m_costs_matrix, solution_matrix, potentials.value());
+      ++iterations_count;
       if (indexes)
       {
         output_stream << "\nRebuilding matrix with pivot element at : [" << indexes->first << ", " << indexes->second << "]\n\n";
@@ -179,7 +181,7 @@ namespace TransportTask
       }
       else break;
     }
-    output_stream << "Found matrix with optimal plane :\n\n" << solution_matrix;
+    output_stream << "Matrix with optimal plane found using " << iterations_count << " iteration(s) \n\n" << solution_matrix;
     auto state_message = i_data.GetMessageForState();
     if (state_message)
     {

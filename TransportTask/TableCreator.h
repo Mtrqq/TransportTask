@@ -1,8 +1,15 @@
 #pragma once
 #include "Utility.h"
+#include <string>
 
 namespace TransportTask
 {
-  Matrix<double> FormatTask(const Vector<double>& i_sources,
-                            const Vector<double>& i_requirements);
+	enum class CreationMethod { NorthWestAngle, MinimalCost, VogelApproximation, LAST };
+
+  CreationMethod ReadCreationMethod(std::istream &i_input, std::ostream* o_logger);
+
+  std::string GetMethodNameString(CreationMethod i_method);
+
+	Matrix<double> FormatTask(const TransportInformation &i_data,
+							CreationMethod i_method = CreationMethod::VogelApproximation);
 }

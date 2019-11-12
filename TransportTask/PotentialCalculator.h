@@ -22,5 +22,5 @@ namespace TransportTask
 
   std::ostream& operator<<(std::ostream& output, const MatrixPotentials& potentials);
 
-  std::optional<MatrixPotentials> CalculatePotentials(const TransportTask::TaskData& i_data, const Matrix<double>& i_solution_matrix);
+  std::optional<MatrixPotentials> CalculatePotentials(const TransportTask::TransportInformation& i_data, const Matrix<double>& i_solution_matrix);
 }

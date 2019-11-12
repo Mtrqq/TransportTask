@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
+#include <string>
 
 using namespace TransportTask;
 
@@ -57,7 +58,8 @@ int main()
   try
   {
     auto data = ReadTaskFromStream(*input_stream, input_log_stream);
-    auto solution = GetOptimalSolution(data, output_log);
+    auto creation_method = ReadCreationMethod(*input_stream, input_log_stream);
+    auto solution = GetOptimalSolution(data, creation_method,output_log);
     std::cout << "\nOptimal solution Z = " << solution << std::endl;
   }
   catch (const std::runtime_error& exception)

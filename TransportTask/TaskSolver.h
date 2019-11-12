@@ -4,5 +4,7 @@
 
 namespace TransportTask
 {
-  double GetOptimalSolution(const TaskData& i_task, std::ostream *o_logger = nullptr);
+  double GetOptimalSolution(const TransportInformation& i_data,
+                            CreationMethod i_method = CreationMethod::VogelApproximation,
+                            std::ostream *o_logger = nullptr);
 }

@@ -54,7 +54,7 @@ namespace TransportTask
     return output;
   }
 
-  std::optional<MatrixPotentials> TransportTask::CalculatePotentials(const TransportTask::TaskData& i_data, const Matrix<double>& i_solution_matrix)
+  std::optional<MatrixPotentials> TransportTask::CalculatePotentials(const TransportTask::TransportInformation& i_data, const Matrix<double>& i_solution_matrix)
   {
     const SizeType rows_count = i_data.m_resources.size();
     const SizeType columns_count = i_data.m_requirements.size();
