@@ -8,9 +8,20 @@ using namespace TransportTask;
 
 namespace
 {
-  double GreedyInvestment(double i_required, double i_available)
+  constexpr double infinity = std::numeric_limits<double>::infinity();
+
+  double GreedyInvestmentAmount(double i_required, double i_available)
   {
     return std::min(i_required, i_available);
+  }
+
+  void MakeGreedyInvestment(Matrix<double>& io_formatted_matrix, Vector<double>& io_requirements, Vector<double>& io_resources, const PairOf<SizeType>& index_pair)
+  {
+    auto [row, column] = index_pair;
+    const double investment = GreedyInvestmentAmount(io_requirements[column], io_resources[row]);
+    io_formatted_matrix[row][column] = investment;
+    io_requirements[column] -= investment;
+    io_resources[row] -= investment;
   }
 
   struct VogelIndex
@@ -26,12 +37,11 @@ namespace
     bool is_row;
   };
 
-  OptionalPair<SizeType> GetApproximationElementIndex(const Matrix<double> &i_costs_matrix,
-    const Matrix<double> &i_edited_matrix,
-    const Vector<double> &i_resources,
-    const Vector<double> &i_requirements)
+  OptionalPair<SizeType> GetApproximationElementIndex(const Matrix<double>& i_costs_matrix,
+    const Matrix<double>& i_edited_matrix,
+    const Vector<double>& i_resources,
+    const Vector<double>& i_requirements)
   {
-    constexpr double infinity = std::numeric_limits<double>::infinity();
     Vector<VogelIndex> processed_elements;
     for (SizeType i = 0; i < i_costs_matrix.size(); ++i)// Foreach row
     {
@@ -94,10 +104,10 @@ namespace
     }
     if (!processed_elements.empty())
     {
-      const auto best_index = *(std::max_element(processed_elements.cbegin(), processed_elements.cend(), [](const VogelIndex &lhs, const VogelIndex &rhs)
-      {
-        return lhs.min_diff < rhs.min_diff;
-      }));
+      const auto best_index = *(std::max_element(processed_elements.cbegin(), processed_elements.cend(), [](const VogelIndex& lhs, const VogelIndex& rhs)
+        {
+          return lhs.min_diff < rhs.min_diff;
+        }));
       if (best_index.is_row)
       {
         SizeType min_index;
@@ -130,27 +140,19 @@ namespace
     return {};
   }
 
-  void VogelFormatter(Matrix<double>& io_edited_matrix, const TransportInformation &i_data)
+  void VogelFormatter(Matrix<double>& io_edited_matrix, const TransportInformation& i_data)
   {
     auto resources = i_data.m_resources;
     auto requirements = i_data.m_requirements;
     auto indexes = GetApproximationElementIndex(i_data.m_costs_matrix, io_edited_matrix, resources, requirements);
     while (indexes)
     {
-      auto[row, column] = indexes.value();
-      const double investment = GreedyInvestment(requirements[column], resources[row]);
-      if (investment == 0)
-      {
-        throw std::runtime_error{ "Something went wrong" };
-      }
-      io_edited_matrix[row][column] = investment;
-      requirements[column] -= investment;
-      resources[row] -= investment;
+      MakeGreedyInvestment(io_edited_matrix, requirements, resources, indexes.value());
       indexes = GetApproximationElementIndex(i_data.m_costs_matrix, io_edited_matrix, resources, requirements);
     }
   }
 
-  void MinimalCostFormatter(Matrix<double>& io_edited_matrix, const TransportInformation &i_data)
+  void MinimalCostFormatter(Matrix<double>& io_edited_matrix, const TransportInformation& i_data)
   {
     Vector<PairOf<SizeType>> min_cost_queue;
     auto resources = i_data.m_resources;
@@ -163,18 +165,89 @@ namespace
         min_cost_queue.emplace_back(i, j);
       }
     }
-    std::sort(min_cost_queue.begin(), min_cost_queue.end(), [&i_data](const PairOf<SizeType> &lhs, const PairOf<SizeType> &rhs)
-    {
-      return i_data.m_costs_matrix[lhs.first][lhs.second] < i_data.m_costs_matrix[rhs.first][rhs.second];
-    });
-    for (auto[row, column] : min_cost_queue)
-    {
-      if (resources[row] != 0 && requirements[column] != 0)
+    std::sort(min_cost_queue.begin(), min_cost_queue.end(), [&i_data](const PairOf<SizeType>& lhs, const PairOf<SizeType>& rhs)
       {
-        const double investment = GreedyInvestment(requirements[column], resources[row]);
-        resources[row] -= investment;
-        requirements[column] -= investment;
-        io_edited_matrix[row][column] = investment;
+        return i_data.m_costs_matrix[lhs.first][lhs.second] < i_data.m_costs_matrix[rhs.first][rhs.second];
+      });
+    for (auto element_indexes : min_cost_queue)
+    {
+      if (resources[element_indexes.first] != 0 && requirements[element_indexes.second] != 0)
+      {
+        MakeGreedyInvestment(io_edited_matrix, requirements, resources, element_indexes);
+      }
+    }
+  }
+
+  void MarkMinimalElements(Matrix<int>& io_marks_matrix, const Matrix<double> &i_costs_matrix)
+  {
+    const SizeType rows_count = io_marks_matrix.size();
+    const SizeType columns_count = io_marks_matrix.front().size();
+    for (SizeType i = 0; i < rows_count; ++i)
+    {
+      SizeType min_index = 0;
+      for (SizeType j = 1; j < columns_count; ++j)
+      {
+        if (i_costs_matrix[i][j] < i_costs_matrix[i][min_index])
+          min_index = j;
+      }
+      ++io_marks_matrix[i][min_index];
+    }
+
+    for (SizeType j = 0; j < columns_count; ++j)
+    {
+      SizeType min_index = 0;
+      for (SizeType i = 1; i < rows_count; ++i)
+      {
+        if (i_costs_matrix[i][j] < i_costs_matrix[min_index][j])
+          min_index = i;
+      }
+      ++io_marks_matrix[min_index][j];
+    }
+  }
+
+  void DoubleMarksFormatter(Matrix<double>& io_edited_matrix, const TransportInformation& i_data)
+  {
+    const SizeType rows_count = io_edited_matrix.size();
+    const SizeType columns_count = io_edited_matrix.front().size();
+    Matrix<int> marks_matrix(rows_count, Vector<int>(columns_count));
+    MarkMinimalElements(marks_matrix, i_data.m_costs_matrix);
+    using ElementInfo = std::pair<PairOf<SizeType>, int>;
+    Vector<ElementInfo> processed_elements;
+    for (SizeType i = 0; i < rows_count; ++i)
+    {
+      for (SizeType j = 0; j < columns_count; ++j)
+      {
+        if (marks_matrix[i][j] != 0)
+          processed_elements.emplace_back(std::make_pair(i,j), marks_matrix[i][j]);
+      }
+    }
+    const auto& costs_matrix = i_data.m_costs_matrix;
+    std::sort(processed_elements.begin(), processed_elements.end(), [&costs_matrix](const ElementInfo& lhs, const ElementInfo& rhs)
+      {
+        return lhs.second > rhs.second || (lhs.second == rhs.second
+          && costs_matrix[lhs.first.first][lhs.first.second] < costs_matrix[rhs.first.first][rhs.first.second]);
+      });
+    auto requirements = i_data.m_requirements;
+    auto resources = i_data.m_resources;
+    for (auto& element_description : processed_elements)
+    {
+      auto& index_pair = element_description.first;
+      if (resources[index_pair.first] != 0.0 && requirements[index_pair.second] != 0.0)
+      {
+        MakeGreedyInvestment(io_edited_matrix, requirements, resources, element_description.first);
+      }
+    }
+    for (SizeType i = 0; i < rows_count; ++i)
+    {
+      if (resources[i] != 0.0)
+      {
+        for (SizeType j = 0; j < columns_count; ++j)
+        {
+          if (requirements[j] != 0.0)
+          {
+            MakeGreedyInvestment(io_edited_matrix, requirements, resources, { i,j });
+          }
+        }
       }
     }
   }
@@ -191,10 +264,10 @@ namespace
       const double actual_resource = i_resources[row];
       while (wasted_for_current_row < actual_resource && processed_column_index < processed_width)
       {
-        const double investment = GreedyInvestment(actual_resource - wasted_for_current_row, resources[processed_column_index]);
+        const double investment = GreedyInvestmentAmount(actual_resource - wasted_for_current_row, resources[processed_column_index]);
         io_edited_matrix[row][processed_column_index] = investment;
-        wasted_for_current_row += investment;
         resources[processed_column_index] -= investment;
+        wasted_for_current_row += investment;
         ++processed_column_index;
       }
       --processed_column_index;
@@ -202,7 +275,7 @@ namespace
     }
   }
 
-  bool EliminateDegeneracy(Matrix<double> &io_formatted_matrix, const TransportInformation &i_data)
+  bool EliminateDegeneracy(Matrix<double>& io_formatted_matrix, const TransportInformation& i_data)
   {
     SizeType count_of_filled_elements = 0;
     for (const auto& row : io_formatted_matrix)
@@ -217,7 +290,7 @@ namespace
     }
     const SizeType sources_count = io_formatted_matrix.size();
     const SizeType clients_count = io_formatted_matrix.front().size();
-    if (count_of_filled_elements != sources_count + clients_count - 1)
+    if (count_of_filled_elements == sources_count + clients_count)
     {
       std::set<PairOf<SizeType>> used_combinations;
       const SizeType available_combinations_count = sources_count * clients_count - count_of_filled_elements - 1;
@@ -225,7 +298,7 @@ namespace
       {
         auto checked_indexes = std::make_pair(rand() % sources_count, rand() % clients_count);
         auto it = used_combinations.find(checked_indexes);
-        auto[row, column] = checked_indexes;
+        auto [row, column] = checked_indexes;
         if (io_formatted_matrix[row][column] == empty_value && it == used_combinations.end())
         {
           io_formatted_matrix[row][column] = 0.0;
@@ -237,13 +310,13 @@ namespace
       }
       return false;
     }
-    return true;
+    else return count_of_filled_elements == sources_count + clients_count - 1;
   }
 }
 
 namespace TransportTask
 {
-  CreationMethod ReadCreationMethod(std::istream & i_input, std::ostream * o_logger)
+  CreationMethod ReadCreationMethod(std::istream& i_input, std::ostream* o_logger)
   {
     OptionalOutputStream output{ o_logger };
     output << "Select creation method :\n";
@@ -261,6 +334,7 @@ namespace TransportTask
       {
         return static_cast<CreationMethod>(selected_method_index - 1);
       }
+      if (!o_logger) throw std::runtime_error{ "Invalid creation method" };
       output << "Enter valid answer :";
     }
   }
@@ -275,11 +349,13 @@ namespace TransportTask
       return "Minimal cost";
     case TransportTask::CreationMethod::VogelApproximation:
       return "Vogel approximation";
+    case TransportTask::CreationMethod::DoubleMarks:
+      return "Double marks";
     }
     throw std::runtime_error{ "Undefined creation method" };
   }
 
-  Matrix<double> FormatTask(const TransportInformation &i_data, CreationMethod i_method)
+  Matrix<double> FormatTask(const TransportInformation& i_data, CreationMethod i_method)
   {
     _ASSERT(i_data.m_resources.size() != 0 && i_data.m_requirements.size() != 0);
     Matrix<double> formatted_matrix(i_data.m_resources.size(), Vector<double>(i_data.m_requirements.size(), empty_value));
@@ -293,6 +369,9 @@ namespace TransportTask
       break;
     case CreationMethod::VogelApproximation:
       VogelFormatter(formatted_matrix, i_data);
+      break;
+    case CreationMethod::DoubleMarks:
+      DoubleMarksFormatter(formatted_matrix, i_data);
       break;
     }
     if (!EliminateDegeneracy(formatted_matrix, i_data))

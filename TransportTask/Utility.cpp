@@ -93,8 +93,8 @@ void TableProcessor::PrintMatrix(const Matrix<double>& i_matrix, std::ostream& o
 }
 
 
-std::ostream& std::operator<<(std::ostream& stream, const TransportTask::Matrix<double>& matrix)
+std::ostream& std::operator<<(std::ostream& m_stream, const TransportTask::Matrix<double>& matrix)
 {
-  TableProcessor::PrintMatrix(matrix, stream);
-  return stream;
+  TableProcessor::PrintMatrix(matrix, m_stream);
+  return m_stream;
 }

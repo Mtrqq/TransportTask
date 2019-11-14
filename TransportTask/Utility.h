@@ -49,7 +49,7 @@ namespace TableProcessor
 
 namespace std
 {
-  std::ostream& operator<<(std::ostream& stream, const TransportTask::Matrix<double>& matrix);
+  std::ostream& operator<<(std::ostream& m_stream, const TransportTask::Matrix<double>& matrix);
 }
 
 namespace TransportTask
@@ -57,21 +57,27 @@ namespace TransportTask
   class OptionalOutputStream
   {
   public:
-    OptionalOutputStream(std::ostream* output_stream = nullptr)
-      :stream{ output_stream }
+    OptionalOutputStream(std::ostream* output_stream = nullptr, bool should_throw = false)
+      :m_stream{ output_stream }
+      ,m_should_throw {should_throw}
     {}
 
     template <typename T>
     OptionalOutputStream& operator<<(const T& object)
     {
-      if (stream)
+      if (m_stream)
       {
-        (*stream) << object;
+        (*m_stream) << object;
+      }
+      else if (m_should_throw)
+      {
+        throw std::runtime_error{ "Failed to show message !" };
       }
       return *this;
     }
 
   private:
-    std::ostream* stream;
+    std::ostream* m_stream;
+    bool m_should_throw;
   };
 }

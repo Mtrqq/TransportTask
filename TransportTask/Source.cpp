@@ -64,7 +64,7 @@ int main()
   }
   catch (const std::runtime_error& exception)
   {
-    std::cout << "\nCalculation failed with message : " << exception.what() << std::endl;
+    std::cerr << "\nCalculation failed with message : " << exception.what() << std::endl;
   }
   system("pause");
 }

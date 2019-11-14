@@ -4,7 +4,7 @@
 
 namespace TransportTask
 {
-	enum class CreationMethod { NorthWestAngle, MinimalCost, VogelApproximation, LAST };
+	enum class CreationMethod { NorthWestAngle, MinimalCost, VogelApproximation, DoubleMarks, LAST };
 
   CreationMethod ReadCreationMethod(std::istream &i_input, std::ostream* o_logger);
 
