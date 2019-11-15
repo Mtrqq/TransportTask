@@ -40,6 +40,8 @@ namespace TransportTask
   };
 
   SOLVER_API TransportInformation ReadTaskFromStream(std::istream& i_stream, std::ostream* o_logger = nullptr);
+
+  SOLVER_API void PrintSummaryToStream(std::ostream& output_stream, const Matrix<double> solution_matrix);
 }
 
 namespace TableProcessor
@@ -58,8 +60,7 @@ namespace TransportTask
   {
   public:
     OptionalOutputStream(std::ostream* output_stream = nullptr, bool should_throw = false)
-      :m_stream{ output_stream }
-      ,m_should_throw {should_throw}
+      :m_stream{ output_stream }      
     {}
 
     template <typename T>
@@ -69,15 +70,10 @@ namespace TransportTask
       {
         (*m_stream) << object;
       }
-      else if (m_should_throw)
-      {
-        throw std::runtime_error{ "Failed to show message !" };
-      }
       return *this;
     }
 
   private:
     std::ostream* m_stream;
-    bool m_should_throw;
   };
 }

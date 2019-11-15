@@ -70,6 +70,21 @@ namespace TransportTask
     }
     return { costs, resources, requirements };
   }
+
+  void PrintSummaryToStream(std::ostream& i_output_stream, const Matrix<double> i_solution_matrix)
+  {
+    i_output_stream << "\nResources distribution :";
+    for (SizeType i = 0; i < i_solution_matrix.size(); ++i)
+    {
+      for (SizeType j = 0; j < i_solution_matrix[i].size(); ++j)
+      {
+        if (i_solution_matrix[i][j] != empty_value)
+        {
+          i_output_stream << "Transport " << i_solution_matrix[i][j] << " units of resource from factory #" << i + 1 << " to client #" << j + 1 << '\n';
+        }
+      }
+    }
+  }
 }
 
 using namespace TransportTask;

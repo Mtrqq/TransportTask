@@ -38,10 +38,60 @@ namespace
     bool is_row;
   };
 
+  PairOf<SizeType> GetBestIndexPair(const Vector<VogelIndex>& i_filtered_indexes,
+                                    const Matrix<double> &i_costs_matrix,
+                                    const Vector<double> &i_requirements,
+                                    const Vector<double> &i_resources)
+  {
+    PairOf<SizeType> pivot_indexes;
+    double best_value = infinity;
+    for (const auto& element_description : i_filtered_indexes)
+    {
+      if (element_description.is_row)
+      {
+        const SizeType row_index = element_description.index;
+        SizeType min_index;
+        double min_value = infinity;
+        for (SizeType j = 0; j < i_costs_matrix.front().size(); ++j)
+        {
+          if (i_resources[row_index] != 0 && i_requirements[j] != 0 && i_costs_matrix[row_index][j] < min_value)
+          {
+            min_value = i_costs_matrix[row_index][j];
+            min_index = j;
+          }
+        }
+        if (best_value > min_value)
+        {
+          pivot_indexes = std::make_pair(row_index, min_index);
+          best_value = min_value;
+        }
+      }
+      else
+      {
+        const SizeType column_index = element_description.index;
+        SizeType min_row_index;
+        double min_value = infinity;
+        for (SizeType i = 0; i < i_costs_matrix.size(); ++i)
+        {
+          if (i_resources[i] != 0 && i_requirements[column_index] != 0 && i_costs_matrix[i][column_index] < min_value)
+          {
+            min_value = i_costs_matrix[i][column_index];
+            min_row_index = i;
+          }
+        }
+        if (best_value > min_value)
+        {
+          pivot_indexes = std::make_pair(min_row_index, column_index);
+          best_value = min_value;
+        }
+      }
+    }
+    return pivot_indexes;
+  }
+
   OptionalPair<SizeType> GetApproximationElementIndex(const Matrix<double>& i_costs_matrix,
-    const Matrix<double>& i_edited_matrix,
-    const Vector<double>& i_resources,
-    const Vector<double>& i_requirements)
+                                                      const Vector<double>& i_resources,
+                                                      const Vector<double>& i_requirements)
   {
     Vector<VogelIndex> processed_elements;
     for (SizeType i = 0; i < i_costs_matrix.size(); ++i)// Foreach row
@@ -74,7 +124,7 @@ namespace
       }
     }
 
-    for (SizeType j = 0; j < i_costs_matrix.front().size(); ++j)// Foreach column
+    for (SizeType j = 0; j < i_costs_matrix.front().size(); ++j)
     {
       if (i_requirements[j] != 0)
       {
@@ -105,51 +155,29 @@ namespace
     }
     if (!processed_elements.empty())
     {
-      const auto best_index = *(std::max_element(processed_elements.cbegin(), processed_elements.cend(), [](const VogelIndex& lhs, const VogelIndex& rhs)
-        {
-          return lhs.min_diff < rhs.min_diff;
-        }));
-      if (best_index.is_row)
+      const double max_diff = std::max_element(processed_elements.cbegin(), processed_elements.cend(), [](const VogelIndex& lhs, const VogelIndex& rhs)
       {
-        SizeType min_index;
-        double min_value = std::numeric_limits<double>::max();
-        for (SizeType j = 0; j < i_costs_matrix.front().size(); ++j)
-        {
-          if (i_resources[best_index.index] != 0 && i_requirements[j] != 0 && i_costs_matrix[best_index.index][j] < min_value)
-          {
-            min_value = i_costs_matrix[best_index.index][j];
-            min_index = j;
-          }
-        }
-        return std::make_pair(best_index.index, min_index);
-      }
-      else
+        return lhs.min_diff < rhs.min_diff;
+      })->min_diff;
+      auto first_invalid = std::remove_if(processed_elements.begin(), processed_elements.end(), [&max_diff](const VogelIndex& index)
       {
-        SizeType min_index;
-        double min_value = std::numeric_limits<double>::max();
-        for (SizeType i = 0; i < i_costs_matrix.size(); ++i)
-        {
-          if (i_resources[i] != 0 && i_requirements[best_index.index] != 0 && i_costs_matrix[i][best_index.index] < min_value)
-          {
-            min_value = i_costs_matrix[i][best_index.index];
-            min_index = i;
-          }
-        }
-        return std::make_pair(min_index, best_index.index);
-      }
+        return index.min_diff < max_diff;
+      });
+      processed_elements.erase(first_invalid, processed_elements.end());
+      return GetBestIndexPair(processed_elements, i_costs_matrix, i_requirements, i_resources);
     }
-    return {};
+    return std::nullopt;
   }
 
   void VogelFormatter(Matrix<double>& io_edited_matrix, const TransportInformation& i_data)
   {
     auto resources = i_data.m_resources;
     auto requirements = i_data.m_requirements;
-    auto indexes = GetApproximationElementIndex(i_data.m_costs_matrix, io_edited_matrix, resources, requirements);
+    auto indexes = GetApproximationElementIndex(i_data.m_costs_matrix, resources, requirements);
     while (indexes)
     {
       MakeGreedyInvestment(io_edited_matrix, requirements, resources, indexes.value());
-      indexes = GetApproximationElementIndex(i_data.m_costs_matrix, io_edited_matrix, resources, requirements);
+      indexes = GetApproximationElementIndex(i_data.m_costs_matrix, resources, requirements);
     }
   }
 
@@ -296,7 +324,7 @@ namespace
     }
     const SizeType sources_count = io_formatted_matrix.size();
     const SizeType clients_count = io_formatted_matrix.front().size();
-    if (count_of_filled_elements == sources_count + clients_count)
+    if (count_of_filled_elements == sources_count + clients_count - 2)
     {
       std::set<PairOf<SizeType>> used_combinations;
       const SizeType available_combinations_count = sources_count * clients_count - count_of_filled_elements - 1;
