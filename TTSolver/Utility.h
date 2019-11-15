@@ -1,4 +1,5 @@
 #pragma once
+#include "ExportHeader.h"
 #include <iostream>
 #include <iomanip>
 #include <vector>
@@ -27,10 +28,9 @@ namespace TransportTask
   {
     enum class ResourcesState { Normal, Sufficient, Overflow };
   public:
+    SOLVER_API TransportInformation(const Matrix<double>& i_cost, const Vector<double> i_resources, const Vector<double> i_requirements);
 
-    TransportInformation(const Matrix<double>& i_cost, const Vector<double> i_resources, const Vector<double> i_requirements);
-
-    std::optional<std::string> GetMessageForState() const;
+    SOLVER_API std::optional<std::string> GetMessageForState() const;
 
     Matrix<double> m_costs_matrix;
     Vector<double> m_requirements;
@@ -39,17 +39,17 @@ namespace TransportTask
     ResourcesState m_state = ResourcesState::Normal;
   };
 
-  TransportInformation ReadTaskFromStream(std::istream& i_stream, std::ostream* o_logger = nullptr);
+  SOLVER_API TransportInformation ReadTaskFromStream(std::istream& i_stream, std::ostream* o_logger = nullptr);
 }
 
 namespace TableProcessor
 {
-  void PrintMatrix(const TransportTask::Matrix<double>& i_matrix, std::ostream& output, TransportTask::SizeType i_alignment = 10);
+  SOLVER_API void PrintMatrix(const TransportTask::Matrix<double>& i_matrix, std::ostream& output, TransportTask::SizeType i_alignment = 10);
 }
 
 namespace std
 {
-  std::ostream& operator<<(std::ostream& m_stream, const TransportTask::Matrix<double>& matrix);
+  SOLVER_API std::ostream& operator<<(std::ostream& m_stream, const TransportTask::Matrix<double>& matrix);
 }
 
 namespace TransportTask

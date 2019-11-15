@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "TaskSolver.h"
 #include "PotentialCalculator.h"
 #include <algorithm>
@@ -166,27 +167,29 @@ namespace TransportTask
     SizeType iterations_count = 0;
     for(;;)
     {
-      auto potentials = CalculatePotentials(i_data, solution_matrix);
-      if (!potentials) 
-        throw std::runtime_error{ "Matrix degenerated !" };
-      output_stream << potentials.value() << '\n';
-      auto indexes = GetInvalidElementIndexes(i_data.m_costs_matrix, solution_matrix, potentials.value());
-      ++iterations_count;
-      if (indexes)
+      if (auto potentials = CalculatePotentials(i_data, solution_matrix); potentials)
       {
-        output_stream << "\nRebuilding matrix with pivot element at : [" << indexes->first << ", " << indexes->second << "]\n\n";
-        RebuildSolutionMatrix(solution_matrix, indexes.value());
-        output_stream << "Matrix after rebuild :\n\n" << solution_matrix
-                      << "\n\nZ = " << CalculateTransportPrice(solution_matrix, i_data.m_costs_matrix);
+        output_stream << potentials.value() << '\n';
+        ++iterations_count;
+        if (auto indexes = GetInvalidElementIndexes(i_data.m_costs_matrix, solution_matrix, potentials.value()); indexes)
+        {
+          output_stream << "\nRebuilding matrix with pivot element at : [" << indexes->first << ", " << indexes->second << "]\n\n";
+          RebuildSolutionMatrix(solution_matrix, indexes.value());
+          output_stream << "Matrix after rebuild :\n\n" << solution_matrix
+            << "\n\nZ = " << CalculateTransportPrice(solution_matrix, i_data.m_costs_matrix);
+        }
+        else break;
       }
-      else break;
+      else throw std::runtime_error{ "Matrix degenerated !" };
     }
-    output_stream << "Matrix with optimal plane found using " << iterations_count << " iteration(s) \n\n" << solution_matrix;
-    auto state_message = i_data.GetMessageForState();
-    if (state_message)
+    auto optimal_price = CalculateTransportPrice(solution_matrix, i_data.m_costs_matrix);
+    output_stream << "Matrix with optimal plane found using " << iterations_count << " iteration(s) \n\n" << solution_matrix
+                  << "\n\nOptimal function value = " << optimal_price << '\n';
+
+    if (auto state_message = i_data.GetMessageForState(); state_message)
     {
       output_stream << "\n\nMessage : " << state_message.value() << "\n";
     }
-    return CalculateTransportPrice(solution_matrix, i_data.m_costs_matrix);
+    return optimal_price;
   }
 }

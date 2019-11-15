@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "TableCreator.h"
 #include "PotentialCalculator.h"
 #include <set>
@@ -213,12 +214,19 @@ namespace
     MarkMinimalElements(marks_matrix, i_data.m_costs_matrix);
     using ElementInfo = std::pair<PairOf<SizeType>, int>;
     Vector<ElementInfo> processed_elements;
+    Vector<PairOf<SizeType>> left_indexes;
     for (SizeType i = 0; i < rows_count; ++i)
     {
       for (SizeType j = 0; j < columns_count; ++j)
       {
         if (marks_matrix[i][j] != 0)
-          processed_elements.emplace_back(std::make_pair(i,j), marks_matrix[i][j]);
+        {
+          processed_elements.emplace_back(std::make_pair(i, j), marks_matrix[i][j]);
+        } 
+        else
+        {
+          left_indexes.emplace_back(i, j);
+        }
       }
     }
     const auto& costs_matrix = i_data.m_costs_matrix;
@@ -237,17 +245,15 @@ namespace
         MakeGreedyInvestment(io_edited_matrix, requirements, resources, element_description.first);
       }
     }
-    for (SizeType i = 0; i < rows_count; ++i)
+    std::sort(left_indexes.begin(), left_indexes.end(), [&costs_matrix](const PairOf<SizeType>& lhs, const PairOf<SizeType>& rhs)
     {
-      if (resources[i] != 0.0)
+        return costs_matrix[lhs.first][lhs.second] < costs_matrix[rhs.first][rhs.second];
+    });
+    for (auto& index_pair : left_indexes)
+    {
+      if (resources[index_pair.first] != 0.0 && requirements[index_pair.second] != 0.0)
       {
-        for (SizeType j = 0; j < columns_count; ++j)
-        {
-          if (requirements[j] != 0.0)
-          {
-            MakeGreedyInvestment(io_edited_matrix, requirements, resources, { i,j });
-          }
-        }
+        MakeGreedyInvestment(io_edited_matrix, requirements, resources, index_pair);
       }
     }
   }
@@ -316,28 +322,7 @@ namespace
 
 namespace TransportTask
 {
-  CreationMethod ReadCreationMethod(std::istream& i_input, std::ostream* o_logger)
-  {
-    OptionalOutputStream output{ o_logger };
-    output << "Select creation method :\n";
-    constexpr int last_enum_element = static_cast<int>(CreationMethod::LAST);
-    for (int i = 0; i != last_enum_element; ++i)
-    {
-      output << i + 1 << "." << GetMethodName(static_cast<CreationMethod>(i)) << '\n';
-    }
-    output << "Answer :";
-    for (;;)
-    {
-      int selected_method_index;
-      i_input >> selected_method_index;
-      if (selected_method_index <= last_enum_element && selected_method_index > 0)
-      {
-        return static_cast<CreationMethod>(selected_method_index - 1);
-      }
-      if (!o_logger) throw std::runtime_error{ "Invalid creation method" };
-      output << "Enter valid answer :";
-    }
-  }
+  
 
   std::string GetMethodName(CreationMethod i_method)
   {

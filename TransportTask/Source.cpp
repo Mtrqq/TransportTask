@@ -1,39 +1,55 @@
-#include "TaskSolver.h"
-#include <iostream>
+#include "..//TTSolver/TaskSolver.h"
+#include "../ThreadPool/ThreadPool.h"
+#include "FunctionTimer.h"
+#include "IOUtility.h"
 #include <fstream>
-#include <algorithm>
-#include <string>
 
 using namespace TransportTask;
 
-std::optional<bool> ConvertStringToBool(const std::string& str)
+ThreadPool& GetThreadPool()
 {
-  std::string converted_string(str.size(), ' ');
-  std::transform(str.cbegin(), str.cend(), converted_string.begin(), ::tolower);
-  if (converted_string == "y" || converted_string == "yes")
-  {
-    return true;
-  }
-  else if (converted_string == "n" || converted_string == "no")
-  {
-    return false;
-  }
-  return {};
+  static ThreadPool instance;
+  return instance;
 }
 
-bool GetYNResponse()
+using FileWrapper = std::unique_ptr<std::ostream>;
+
+void ExecuteWithDifferentMethods(const TransportInformation& i_information, const std::vector<FileWrapper>& i_output_streams)
 {
-  std::string responce;
-  std::cin >> responce;
-  auto converted_bool = ConvertStringToBool(responce);
-  while (!converted_bool)
+  SizeType amount_of_methods = static_cast<SizeType>(CreationMethod::LAST);
+  using ExecutionResult = std::future<TimerFunctionResult<double>>;
+  std::vector<ExecutionResult> execution_results;
+  execution_results.reserve(amount_of_methods);
+  auto& thread_pool = GetThreadPool();
+  for (SizeType i = 0; i != amount_of_methods; ++i)
   {
-    std::cout << "\nEnter correct answer :";
-    std::cin >> responce;
-    converted_bool = ConvertStringToBool(responce);
+    auto& file = *i_output_streams[i];
+    auto calculation_method = static_cast<CreationMethod>(i);
+    auto actual_task = [&file, &i_information, calculation_method]
+    {
+      return ExecutionTime(GetOptimalSolution, i_information, calculation_method, &file);
+    };
+    execution_results.push_back(thread_pool.Execute(actual_task));
   }
-  std::cin.clear();
-  return converted_bool.value();
+  std::vector<TimerFunctionResult<double>> solutions(amount_of_methods);
+  std::transform(execution_results.begin(), execution_results.end(), solutions.begin(), [](ExecutionResult& result)
+  {
+    return result.get();
+  });
+  thread_pool.Wait();
+  auto first_result = solutions.front().function_result;
+  if (std::all_of(solutions.cbegin(), solutions.cend(), [&first_result](const TimerFunctionResult<double>& result)
+    {
+      return result.function_result == first_result;
+    }))
+  {
+    for (SizeType i = 0; i != amount_of_methods; ++i)
+    {
+      std::cout << "\nResult of " << GetMethodName(static_cast<CreationMethod>(i)) << " method execution : "
+                << "\n" << solutions[i] << '\n';
+    }
+  }
+  else throw std::runtime_error{ "calculation results are not the same !" };
 }
 
 int main()
@@ -42,7 +58,7 @@ int main()
   std::cout << "Would you like to read data from file ? (y/n)\nAnswer: ";
   std::istream* input_stream = &std::cin;
   std::ostream* input_log_stream = &std::cout;
-  auto answer = GetYNResponse();
+  auto answer = GetYNResponse(std::cin, std::cout);
   if (answer)
   {
     std::string file_name;
@@ -54,13 +70,18 @@ int main()
     input_log_stream = nullptr;
   }
   std::cout << "Would you like to gain detailed solution ? (y/n)\nAnswer : ";
-  std::ostream* output_log = GetYNResponse() ? &std::cout : nullptr;
+  std::ostream* output_log = GetYNResponse(std::cin, std::cout) ? &std::cout : nullptr;
   try
   {
     auto data = ReadTaskFromStream(*input_stream, input_log_stream);
-    auto creation_method = ReadCreationMethod(*input_stream, input_log_stream);
-    auto solution = GetOptimalSolution(data, creation_method,output_log);
-    std::cout << "\nOptimal solution Z = " << solution << std::endl;
+    SizeType amount_of_methods = static_cast<SizeType>(CreationMethod::LAST);
+    std::vector<FileWrapper> files_vec;
+    for (SizeType i = 0; i != amount_of_methods; ++i)
+    {
+      auto file = std::make_unique<std::ofstream>(GetMethodName(static_cast<CreationMethod>(i)) + ".log");
+      files_vec.push_back(std::move(file));
+    }
+    ExecuteWithDifferentMethods(data, files_vec);
   }
   catch (const std::runtime_error& exception)
   {

@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "PotentialCalculator.h"
 #include <optional>
 #include <queue>
