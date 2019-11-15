@@ -59,9 +59,7 @@ namespace TransportTask
   class OptionalOutputStream
   {
   public:
-    OptionalOutputStream(std::ostream* output_stream = nullptr, bool should_throw = false)
-      :m_stream{ output_stream }      
-    {}
+    SOLVER_API OptionalOutputStream(std::ostream* output_stream = nullptr);
 
     template <typename T>
     OptionalOutputStream& operator<<(const T& object)

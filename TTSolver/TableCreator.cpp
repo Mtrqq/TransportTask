@@ -350,8 +350,6 @@ namespace
 
 namespace TransportTask
 {
-  
-
   std::string GetMethodName(CreationMethod i_method)
   {
     switch (i_method)

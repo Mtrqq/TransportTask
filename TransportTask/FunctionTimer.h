@@ -15,7 +15,7 @@ struct TimerFunctionResult
 template <typename FunctionResult>
 std::ostream& operator<<(std::ostream& output, const TimerFunctionResult<FunctionResult>& result)
 {
-  return output << "Time :" << result.timing << '\t' << "Function result :" << result.function_result << std::endl;
+  return output << "Time : " << result.timing << '\t' << "Function result : " << result.function_result << std::endl;
 }
 
 template <typename FunctionType, typename ...Args>

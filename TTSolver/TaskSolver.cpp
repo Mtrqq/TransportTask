@@ -185,10 +185,10 @@ namespace TransportTask
     auto optimal_price = CalculateTransportPrice(solution_matrix, i_data.m_costs_matrix);
     output_stream << "Matrix with optimal plane found using " << iterations_count << " iteration(s) \n\n" << solution_matrix
                   << "\n\nOptimal function value = " << optimal_price << '\n';
-
+    if (o_logger) PrintSummaryToStream(*o_logger, solution_matrix);
     if (auto state_message = i_data.GetMessageForState(); state_message)
     {
-      output_stream << "\n\nMessage : " << state_message.value() << "\n";
+      output_stream << "\nMessage : " << state_message.value() << "\n";
     }
     return optimal_price;
   }

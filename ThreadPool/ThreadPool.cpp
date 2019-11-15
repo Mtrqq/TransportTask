@@ -41,7 +41,6 @@ void ThreadPool::Wait(int msec_wait_interval)
   }
 }
 
-
 void ThreadPool::RunExecution()
 {
   bool initialized = false;
