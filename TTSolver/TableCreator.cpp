@@ -368,7 +368,6 @@ namespace TransportTask
 
   Matrix<double> FormatTask(const TransportInformation& i_data, CreationMethod i_method)
   {
-    _ASSERT(i_data.m_resources.size() != 0 && i_data.m_requirements.size() != 0);
     Matrix<double> formatted_matrix(i_data.m_resources.size(), Vector<double>(i_data.m_requirements.size(), empty_value));
     switch (i_method)
     {

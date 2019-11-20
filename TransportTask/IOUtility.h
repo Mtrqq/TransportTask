@@ -36,7 +36,9 @@ private:
 
   static bool CreateFolderIfNotExists(const std::string& i_folder_name);
 
-  static std::string GetFileName(const std::string& file_path);
+  static std::string GetFileName(const std::string& i_file_path);
+
+  static std::string SelectAnyFile();
 };
 
 bool GetYNResponse(std::istream& input_stream, std::ostream& output_stream);

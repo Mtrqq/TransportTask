@@ -1,6 +1,8 @@
-#include "IOUtility.h"
+﻿#include "IOUtility.h"
+#include <Windows.h>
 #include <algorithm>
 #include <fstream>
+#include <memory>
 
 namespace
 {
@@ -91,9 +93,7 @@ inline std::istream* DataExtractor::SelectDataStream(std::istream& i_input, std:
   std::cout << "Would you like to read data from file ? (y/n)\nAnswer: ";
   if (bool answer = GetYNResponse(std::cin, std::cout); answer)
   {
-    std::cout << "Enter path to file with data : ";
-    std::string file_path;
-    m_communication_stream >> file_path;
+    auto file_path = SelectAnyFile();
     auto file_stream = new std::ifstream{ file_path };
     if (file_stream->is_open())
     {
@@ -125,4 +125,29 @@ std::string DataExtractor::GetFileName(const std::string &i_file_path)
     last_separator_pos = 0;
   else ++last_separator_pos;
   return converted_string.substr(last_separator_pos, last_dot_pos - last_separator_pos);
+}
+
+std::string DataExtractor::SelectAnyFile()
+{
+  OPENFILENAME ofn; // Common dialog box structure.
+  constexpr std::size_t buffer_size = 256;
+  auto file_path_buffer = std::make_unique<char[]>(buffer_size);
+  auto file_title_buffer = std::make_unique<char[]>(buffer_size);
+  memset(file_path_buffer.get(), '\0', buffer_size);
+  HWND actual_hwnd = GetActiveWindow();
+  ZeroMemory(&ofn, sizeof(ofn));
+  ofn.lStructSize = sizeof(ofn);
+  ofn.hwndOwner = actual_hwnd;
+  ofn.lpstrFile = file_path_buffer.get();
+  ofn.nMaxFile = buffer_size;
+  ofn.lpstrFilter = "All Files\0*.*\0\0";
+  ofn.nFilterIndex = 2; // ??
+  ofn.lpstrFileTitle = file_title_buffer.get();
+  ofn.nMaxFileTitle = buffer_size;
+  ofn.lpstrInitialDir = NULL;
+  ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+  if (!GetOpenFileName(&ofn))
+    throw std::runtime_error{ "File selection error !" };
+
+  return { file_path_buffer.get() , buffer_size };
 }

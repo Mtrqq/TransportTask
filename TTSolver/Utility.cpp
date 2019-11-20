@@ -68,7 +68,11 @@ namespace TransportTask
         i_stream >> costs[i][j];
       }
     }
-    return { costs, resources, requirements };
+    if (resources.size() != 0 && requirements.size() != 0 && !i_stream.bad())
+    {
+      return { costs, resources, requirements };
+    }
+    else throw std::runtime_error{ "Failed while reading task data !" };
   }
 
   void PrintSummaryToStream(std::ostream& i_output_stream, const Matrix<double> i_solution_matrix)
