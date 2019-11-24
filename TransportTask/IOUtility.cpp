@@ -141,7 +141,7 @@ std::string DataExtractor::SelectAnyFile()
   ofn.lpstrFile = file_path_buffer.get();
   ofn.nMaxFile = buffer_size;
   ofn.lpstrFilter = "All Files\0*.*\0\0";
-  ofn.nFilterIndex = 2; // ??
+  ofn.nFilterIndex = 2;
   ofn.lpstrFileTitle = file_title_buffer.get();
   ofn.nMaxFileTitle = buffer_size;
   ofn.lpstrInitialDir = NULL;

@@ -1,10 +1,8 @@
 #pragma once
 #include "ExportHeader.h"
-#include <iostream>
-#include <iomanip>
 #include <vector>
-#include <numeric>
 #include <optional>
+#include <string>
 
 namespace TransportTask
 {
@@ -39,39 +37,36 @@ namespace TransportTask
     ResourcesState m_state = ResourcesState::Normal;
   };
 
-  SOLVER_API TransportInformation ReadTaskFromStream(std::istream& i_stream, std::ostream* o_logger = nullptr);
+  SOLVER_API Vector<std::string> GetResoucesDistributionDetails(const Matrix<double>& i_feasible_solution);
 
-  SOLVER_API void PrintSummaryToStream(std::ostream& output_stream, const Matrix<double> solution_matrix);
-}
-
-namespace TableProcessor
-{
-  SOLVER_API void PrintMatrix(const TransportTask::Matrix<double>& i_matrix, std::ostream& output, TransportTask::SizeType i_alignment = 10);
-}
-
-namespace std
-{
-  SOLVER_API std::ostream& operator<<(std::ostream& m_stream, const TransportTask::Matrix<double>& matrix);
-}
-
-namespace TransportTask
-{
-  class OptionalOutputStream
+  struct MatrixPotentials
   {
-  public:
-    SOLVER_API OptionalOutputStream(std::ostream* output_stream = nullptr);
+    SOLVER_API MatrixPotentials(SizeType i_rows_count, SizeType i_columns_count);
 
-    template <typename T>
-    OptionalOutputStream& operator<<(const T& object)
-    {
-      if (m_stream)
-      {
-        (*m_stream) << object;
-      }
-      return *this;
-    }
+    Vector<double> m_rows;
+    Vector<double> m_columns;
 
-  private:
-    std::ostream* m_stream;
+    SOLVER_API static bool IsValidPotential(double i_potential);
+
+    SOLVER_API double PotentialAt(SizeType i_row, SizeType i_column) const;
+
+    SOLVER_API bool IsFullyCalculated() const;
+  };  
+
+  SOLVER_API double CalculateTransportPrice(const Matrix<double>& i_actual_solution, const Matrix<double>& i_costs);
+
+  struct SolutionInfo
+  {
+    Vector<Matrix<double>> solution_steps;
+    Vector<MatrixPotentials> potentials;
+    Vector<PairOf<SizeType>> rebuilding_pivots;
+
+    SOLVER_API SizeType GetIterationsCount() const;
+
+    SOLVER_API double GetMatrixCostAtStep(SizeType step_index, const Matrix<double>& costs_matrix) const;
+
+    SOLVER_API SizeType GetAmountOfBytesSpent() const;
   };
+
+  SOLVER_API std::string GetStepDescription(const SolutionInfo& prepared_solution, SizeType step_index);
 }

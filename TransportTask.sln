@@ -3,17 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29215.179
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TransportTask", "TransportTask\TransportTask.vcxproj", "{8C54E20C-15C5-4347-9008-5BD765072D5E}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TTSolver", "TTSolver\TTSolver.vcxproj", "{A9C985E9-01DE-4C53-9C08-2C1FC4B36812}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThreadPool", "ThreadPool\ThreadPool.vcxproj", "{ADB4D8D9-934E-46B0-9700-DA08D48C50C5}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "InputData", "InputData", "{87DAF586-5258-455C-AAA0-454986E3ADBB}"
-	ProjectSection(SolutionItems) = preProject
-		TransportTask\InputData\TestCase1.txt = TransportTask\InputData\TestCase1.txt
-		TransportTask\InputData\TestCase2.txt = TransportTask\InputData\TestCase2.txt
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SolverApp", "SolverApp\SolverApp.vcxproj", "{B12702AD-ABFB-343A-A199-8E24837244A3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,14 +17,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{8C54E20C-15C5-4347-9008-5BD765072D5E}.Debug|x64.ActiveCfg = Debug|x64
-		{8C54E20C-15C5-4347-9008-5BD765072D5E}.Debug|x64.Build.0 = Debug|x64
-		{8C54E20C-15C5-4347-9008-5BD765072D5E}.Debug|x86.ActiveCfg = Debug|Win32
-		{8C54E20C-15C5-4347-9008-5BD765072D5E}.Debug|x86.Build.0 = Debug|Win32
-		{8C54E20C-15C5-4347-9008-5BD765072D5E}.Release|x64.ActiveCfg = Release|x64
-		{8C54E20C-15C5-4347-9008-5BD765072D5E}.Release|x64.Build.0 = Release|x64
-		{8C54E20C-15C5-4347-9008-5BD765072D5E}.Release|x86.ActiveCfg = Release|Win32
-		{8C54E20C-15C5-4347-9008-5BD765072D5E}.Release|x86.Build.0 = Release|Win32
 		{A9C985E9-01DE-4C53-9C08-2C1FC4B36812}.Debug|x64.ActiveCfg = Debug|x64
 		{A9C985E9-01DE-4C53-9C08-2C1FC4B36812}.Debug|x64.Build.0 = Debug|x64
 		{A9C985E9-01DE-4C53-9C08-2C1FC4B36812}.Debug|x86.ActiveCfg = Debug|Win32
@@ -47,11 +33,18 @@ Global
 		{ADB4D8D9-934E-46B0-9700-DA08D48C50C5}.Release|x64.Build.0 = Release|x64
 		{ADB4D8D9-934E-46B0-9700-DA08D48C50C5}.Release|x86.ActiveCfg = Release|Win32
 		{ADB4D8D9-934E-46B0-9700-DA08D48C50C5}.Release|x86.Build.0 = Release|Win32
+		{B12702AD-ABFB-343A-A199-8E24837244A3}.Debug|x64.ActiveCfg = Debug|x64
+		{B12702AD-ABFB-343A-A199-8E24837244A3}.Debug|x64.Build.0 = Debug|x64
+		{B12702AD-ABFB-343A-A199-8E24837244A3}.Debug|x86.ActiveCfg = Debug|x64
+		{B12702AD-ABFB-343A-A199-8E24837244A3}.Release|x64.ActiveCfg = Release|x64
+		{B12702AD-ABFB-343A-A199-8E24837244A3}.Release|x64.Build.0 = Release|x64
+		{B12702AD-ABFB-343A-A199-8E24837244A3}.Release|x86.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
+		Qt5Version = 5.13
 		SolutionGuid = {E3836ABE-853B-4DF5-8968-B59756DE8BA8}
 	EndGlobalSection
 EndGlobal

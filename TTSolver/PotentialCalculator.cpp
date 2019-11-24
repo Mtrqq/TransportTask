@@ -25,36 +25,6 @@ namespace
 
 namespace TransportTask
 {
-  MatrixPotentials::MatrixPotentials(SizeType i_rows_count, SizeType i_columns_count)
-    :m_rows(i_rows_count,empty_value)
-    ,m_columns(i_columns_count, empty_value)
-  {}
-
-  bool MatrixPotentials::IsValidPotential(double i_potential)
-  {
-    return i_potential != empty_value;
-  }
-
-  double MatrixPotentials::PotentialAt(SizeType i_row, SizeType i_column) const
-  {
-    return m_rows[i_row] + m_columns[i_column];
-  }
-
-  bool MatrixPotentials::IsFullyCalculated() const
-  {
-    return std::all_of(m_rows.cbegin(), m_rows.cend(), IsValidPotential) &&
-      std::all_of(m_columns.cbegin(), m_columns.cend(), IsValidPotential);
-  }
-
-  std::ostream& operator<<(std::ostream& output, const MatrixPotentials& potentials)
-  {
-    output << "\nU[i] = ";
-    std::copy(potentials.m_rows.cbegin(), potentials.m_rows.cend(), std::ostream_iterator<double>{output, " "});
-    output << "\nV[j] = ";
-    std::copy(potentials.m_columns.cbegin(), potentials.m_columns.cend(), std::ostream_iterator<double>{output, " "});
-    return output;
-  }
-
   std::optional<MatrixPotentials> TransportTask::CalculatePotentials(const TransportTask::TransportInformation& i_data, const Matrix<double>& i_solution_matrix)
   {
     const SizeType rows_count = i_data.m_resources.size();

@@ -2,6 +2,7 @@
 #include "TaskSolver.h"
 #include "PotentialCalculator.h"
 #include <algorithm>
+#include <sstream>
 #include <string>
 
 namespace
@@ -80,7 +81,7 @@ namespace
     io_solution[best_indexes.first][best_indexes.second] = empty_value;
   }
 
-  void RebuildSolutionMatrix(Matrix<double> &io_solution,const PairOf<SizeType> &i_pivot_indexes)
+  void RebuildSolutionMatrix(Matrix<double>& io_solution, const PairOf<SizeType>& i_pivot_indexes)
   {
     Matrix<int> marks_matrix(io_solution.size(), Vector<int>(io_solution.front().size()));
     auto [pivot_row, pivot_column] = i_pivot_indexes;
@@ -101,25 +102,6 @@ namespace
       }
     }
     throw std::runtime_error{ "Matrix degenerated !" };
-  }
-
-  double CalculateTransportPrice(const Matrix<double>& i_actual_solution, const Matrix<double>& i_costs)
-  {
-    double accumulation = 0;
-    const SizeType rows_count = i_actual_solution.size();
-    const SizeType columns_count = i_actual_solution.front().size();
-    for (SizeType row = 0; row < rows_count; ++row)
-    {
-      for (SizeType column = 0; column < columns_count; ++column)
-      {
-        const double current_element = i_actual_solution[row][column];
-        if (current_element != empty_value)
-        {
-          accumulation += current_element * i_costs[row][column];
-        }
-      }
-    }
-    return accumulation;
   }
 
   OptionalPair<SizeType> GetInvalidElementIndexes(const Matrix<double>& i_costs, const Matrix<double> &i_solution_matrix, const MatrixPotentials& i_potentials)
@@ -157,39 +139,27 @@ namespace
 }
 
 namespace TransportTask
-{
-  double GetOptimalSolution(const TransportInformation& i_data, CreationMethod i_method, std::ostream *o_logger)
+{ 
+  SolutionInfo GetOptimalSolution(const TransportInformation& i_data, CreationMethod i_method)
   {
-    OptionalOutputStream output_stream{ o_logger };
-    auto solution_matrix = FormatTask(i_data, i_method);
-    output_stream << "Initial matrix :\n\n" << solution_matrix;
-    output_stream << "\n\nInitial price = " << CalculateTransportPrice(solution_matrix, i_data.m_costs_matrix);
-    SizeType iterations_count = 0;
+    auto feasible_solution = FormatTask(i_data, i_method);
+    SolutionInfo solution_details;
     for(;;)
     {
-      if (auto potentials = CalculatePotentials(i_data, solution_matrix); potentials)
+      if (auto potentials_opt = CalculatePotentials(i_data, feasible_solution); potentials_opt)
       {
-        output_stream << potentials.value() << '\n';
-        ++iterations_count;
-        if (auto indexes = GetInvalidElementIndexes(i_data.m_costs_matrix, solution_matrix, potentials.value()); indexes)
+        auto potentials = std::move(potentials_opt.value());
+        solution_details.potentials.push_back(potentials);
+        solution_details.solution_steps.push_back(feasible_solution);
+        if (auto indexes = GetInvalidElementIndexes(i_data.m_costs_matrix, feasible_solution, potentials); indexes)
         {
-          output_stream << "\nRebuilding matrix with pivot element at : [" << indexes->first << ", " << indexes->second << "]\n\n";
-          RebuildSolutionMatrix(solution_matrix, indexes.value());
-          output_stream << "Matrix after rebuild :\n\n" << solution_matrix
-            << "\n\nZ = " << CalculateTransportPrice(solution_matrix, i_data.m_costs_matrix);
+          solution_details.rebuilding_pivots.push_back(indexes.value());
+          RebuildSolutionMatrix(feasible_solution, indexes.value());
         }
         else break;
       }
       else throw std::runtime_error{ "Matrix degenerated !" };
     }
-    auto optimal_price = CalculateTransportPrice(solution_matrix, i_data.m_costs_matrix);
-    output_stream << "Matrix with optimal plane found using " << iterations_count << " iteration(s) \n\n" << solution_matrix
-                  << "\n\nOptimal function value = " << optimal_price << '\n';
-    if (o_logger) PrintSummaryToStream(*o_logger, solution_matrix);
-    if (auto state_message = i_data.GetMessageForState(); state_message)
-    {
-      output_stream << "\nMessage : " << state_message.value() << "\n";
-    }
-    return optimal_price;
+    return solution_details;
   }
 }

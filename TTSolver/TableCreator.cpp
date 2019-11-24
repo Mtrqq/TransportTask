@@ -4,6 +4,7 @@
 #include <set>
 #include <algorithm>
 #include <numeric>
+#include <stdexcept>
 
 using namespace TransportTask;
 

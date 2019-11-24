@@ -1,6 +1,4 @@
 #pragma once
-#include <vector>
-#include <iostream>
 #include <chrono>
 
 template <typename FunctionResult>
@@ -12,18 +10,14 @@ struct TimerFunctionResult
   TimerFunctionResult() = default;
 };
 
-template <typename FunctionResult>
-std::ostream& operator<<(std::ostream& output, const TimerFunctionResult<FunctionResult>& result)
-{
-  return output << "Time : " << result.timing << '\t' << "Function result : " << result.function_result << std::endl;
-}
-
 template <typename FunctionType, typename ...Args>
 auto ExecutionTime(FunctionType function, Args&& ...args)
 {
-  auto start = std::chrono::steady_clock::now();
+  using namespace std::chrono;
   TimerFunctionResult<decltype(function(args...))> result;
+  auto start = high_resolution_clock::now();
   result.function_result = function(std::forward<Args>(args)...);
-  result.timing = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
+  auto stop = high_resolution_clock::now();
+  result.timing = duration_cast<milliseconds>(stop - start);
   return result;
 }
