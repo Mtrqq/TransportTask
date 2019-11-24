@@ -34,11 +34,14 @@ namespace TransportTask
     {
       if (m_state == ResourcesState::Overflow)
       {
-        return "Last client indicates unused resources";
+        return "Last client is fictive and indicates unused resources";
       }
-      else return "Last warehouse indicates sufficient resources";
+      else
+      {
+        return "Last source is fictive and indicates sufficient resources";
+      }
     }
-    return {};
+    return std::nullopt;
   }
 
   Vector<std::string> GetResoucesDistributionDetails(const Matrix<double>& i_feasible_solution)
@@ -49,7 +52,7 @@ namespace TransportTask
       for (SizeType j = 0; j < i_feasible_solution[i].size(); ++j)
       {
         const double resource_amount = i_feasible_solution[i][j];
-        if (resource_amount != empty_value)
+        if (resource_amount != empty_value && resource_amount != 0.0)
         {
           std::ostringstream stream;
           stream << "Transport " <<resource_amount << " units of resource from warehouse #" << i + 1 << " to client #" << j + 1;

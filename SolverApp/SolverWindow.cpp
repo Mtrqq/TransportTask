@@ -148,6 +148,11 @@ void SolverWindow::FillResourcesDistributionInfo()
 {
   auto& solution_matrix = solutions.front().solution_steps.back();
   auto distribution_messages = TransportTask::GetResoucesDistributionDetails(solution_matrix);
+  if (auto notice_message = problem->GetMessageForState(); notice_message)
+  {
+    distribution_messages.push_back(std::string("Notice: ") + notice_message.value());
+    std::swap(distribution_messages.front(), distribution_messages.back());
+  }
   for (auto& message : distribution_messages)
   {
     QString inserted_label = QString::fromStdString(std::move(message));
