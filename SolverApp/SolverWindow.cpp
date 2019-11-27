@@ -6,7 +6,7 @@
 #include <QHeaderView>
 #include <QTableWidget>
 #include <QFileDialog>
-#include <QDebug>
+#include <QStandardPaths>
 
 namespace
 {
@@ -168,7 +168,7 @@ void SolverWindow::SetTableValueAt(quint64 row, quint64 column, double value)
 
 void SolverWindow::ExportToExcel()
 {
-  auto saved_file_url = QFileDialog::getSaveFileUrl(this, "Save as", QUrl(), "Excel files (*.xlsx)");
+  auto saved_file_url = QFileDialog::getSaveFileUrl(this, "Save as", QUrl::fromLocalFile(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)), "Excel files (*.xlsx)");
   if (!saved_file_url.isEmpty())
   {
     xlnt::workbook excel_document;

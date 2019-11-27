@@ -6,6 +6,7 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QStandardPaths>
 
 #include <vector>
 #include <optional>
@@ -32,6 +33,7 @@ TTFillerForm::TTFillerForm(QWidget* parent)
 {
   ui.setupUi(this);
   setWindowTitle("Data reading dialog");
+  setFixedSize(size());
   ResizeMatrix(2, 2);
   ui.costsTable->setEditTriggers(QAbstractItemView::EditTrigger::AllEditTriggers);
   QTableWidgetItem* ignored_cell = new QTableWidgetItem;
@@ -202,7 +204,9 @@ void TTFillerForm::SaveToJSON() const
     }
   }
 
-  auto selected_file_url = QFileDialog::getSaveFileUrl(nullptr, "Save as", QUrl(), tr("Transportation task input (*.tti)"));
+  auto selected_file_url = QFileDialog::getSaveFileUrl(nullptr, "Save as", 
+                           QUrl::fromLocalFile(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)), 
+                           tr("Transportation task input (*.tti)"));
   if (!selected_file_url.isEmpty())
   {
     QFile saved_file(selected_file_url.toLocalFile());
@@ -232,38 +236,43 @@ void TTFillerForm::SaveToJSON() const
 
 void TTFillerForm::LoadFromJSON()
 {
-  auto selected_file_path = QFileDialog::getOpenFileName(nullptr, "Select file", "", tr("Transportation task input (*.tti)"));
-  QFile json_file{ selected_file_path };
-  if (json_file.open(QIODevice::ReadOnly))
+  auto selected_file_url = QFileDialog::getOpenFileUrl(nullptr, "Select file", 
+                                                       QUrl::fromLocalFile(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation))
+                                                      , tr("Transportation task input (*.tti)"));
+  if (!selected_file_url.isEmpty())
   {
-    auto file_content = json_file.readAll();
-    QJsonDocument document = QJsonDocument::fromBinaryData(file_content);
-    if (!document.isNull())
+    QFile json_file{ selected_file_url.toLocalFile() };
+    if (json_file.open(QIODevice::ReadOnly))
     {
-      auto json_object = document.object();
-      if (json_object.contains("array_of_matrix_rows") && json_object["array_of_matrix_rows"].isArray())
+      auto file_content = json_file.readAll();
+      QJsonDocument document = QJsonDocument::fromBinaryData(file_content);
+      if (!document.isNull())
       {
-        auto rows_array = json_object["array_of_matrix_rows"].toArray();
-        const int rows_count = rows_array.size();
-        const int columns_count = rows_array[0].toArray().size();
-        ResizeMatrix(rows_count, columns_count);
-        for (int i = 0; i < rows_count; ++i)
+        auto json_object = document.object();
+        if (json_object.contains("array_of_matrix_rows") && json_object["array_of_matrix_rows"].isArray())
         {
-          auto& actual_row = rows_array[i].toArray();
-          for (int j = 0; j < columns_count; ++j)
+          auto rows_array = json_object["array_of_matrix_rows"].toArray();
+          const int rows_count = rows_array.size();
+          const int columns_count = rows_array[0].toArray().size();
+          ResizeMatrix(rows_count, columns_count);
+          for (int i = 0; i < rows_count; ++i)
           {
-            QTableWidgetItem* item = new QTableWidgetItem(actual_row[j].toString());
-            ui.costsTable->setItem(i, j, item);
+            auto& actual_row = rows_array[i].toArray();
+            for (int j = 0; j < columns_count; ++j)
+            {
+              QTableWidgetItem* item = new QTableWidgetItem(actual_row[j].toString());
+              ui.costsTable->setItem(i, j, item);
+            }
           }
+          QTableWidgetItem* ignored_cell = new QTableWidgetItem;
+          ignored_cell->setFlags(ignored_cell->flags() ^ (Qt::ItemIsSelectable | Qt::ItemIsEditable));
+          ui.costsTable->setItem(0, 0, ignored_cell);
+          return;
         }
-        QTableWidgetItem* ignored_cell = new QTableWidgetItem;
-        ignored_cell->setFlags(ignored_cell->flags() ^ (Qt::ItemIsSelectable | Qt::ItemIsEditable));
-        ui.costsTable->setItem(0, 0, ignored_cell);
-        return;
       }
     }
+    QMessageBox::warning(nullptr, "Warning", "Unable to read file !");
   }
-  QMessageBox::warning(nullptr, "Warning", "Unable to read file !");
 }
 
 void TTFillerForm::ShowTooltip() const
